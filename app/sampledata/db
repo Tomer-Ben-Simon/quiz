@@ -1,0 +1,7 @@
+Collection: quizzes
+  └── Document: week_34
+        └── Field: questions (Array of Maps)
+        Firestore
+        └── users (collection)
+            └── UID_12345 (document)
+                └── name: "John Doe"
