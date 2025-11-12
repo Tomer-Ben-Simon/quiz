@@ -1,7 +1,6 @@
 package com.example.quiz2
 import android.app.ActivityManager
 import android.app.AlertDialog
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -15,8 +14,6 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.room.Dao
 import androidx.room.Database
-//import androidx.room.vo.Entity
-//import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
 import java.io.IOException
 import okhttp3.OkHttpClient
@@ -32,7 +29,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
-import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
