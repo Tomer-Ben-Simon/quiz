@@ -1,7 +1,6 @@
 package com.example.quiz2
 import android.app.ActivityManager
 import android.app.AlertDialog
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -15,8 +14,6 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.room.Dao
 import androidx.room.Database
-//import androidx.room.vo.Entity
-//import com.google.firebase.firestore.FirebaseFirestore
 import org.json.JSONObject
 import java.io.IOException
 import okhttp3.OkHttpClient
@@ -32,10 +29,11 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
-import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
+import android.text.SpannableString
+import android.text.style.RelativeSizeSpan
 
 
 class MainActivity : AppCompatActivity() {
@@ -155,26 +153,47 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
 
-        val item = menu?.findItem(R.id.action_user)
-        val actionView = item?.actionView
 
-        val button = actionView?.findViewById<Button>(R.id.user_title)
-        button?.setOnClickListener {
-            val intent = Intent(this, UserProfileActivity::class.java)
-            startActivity(intent)
+        // Find the menu item safely
+        val resultsMenuItem = menu?.findItem(R.id.action_show_results)
+
+        // --- SAFE CODE BLOCK ---
+        // Only proceed if the menu item was actually found
+        if (resultsMenuItem != null) {
+            val title = resultsMenuItem.title
+
+            // Also check if the title itself is not null or empty
+            if (!title.isNullOrEmpty()) {
+                val spannableTitle = SpannableString(title)
+
+                // Apply the size span
+                // The previous fix (?: 0) is still important here
+                spannableTitle.setSpan(
+                    RelativeSizeSpan(1.2f),
+                    0,
+                    title.length, // No need for Elvis operator here because we already checked for null
+                    0
+                )
+
+                // Set the new styled title
+                resultsMenuItem.title = spannableTitle
+            }
         }
-
+        // --- END OF SAFE CODE BLOCK ---
         return true
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_user -> {
-                // Handle user option click
-                // For example, open a UserProfileActivity
-//              Toast.makeText(this, "הכנס משתמש clicked", Toast.LENGTH_SHORT).show()
-                //               true
+                // טיפול בלחיצה על כפתור פרופיל המשתמש
                 val intent = Intent(this, UserProfileActivity::class.java)
                 startActivity(intent)
+                true
+            }
+            // ===== הוספת טיפול בלחיצה על הכפתור החדש =====
+            R.id.action_show_results -> {
+                // קריאה לפונקציה שמציגה את רשימת המשתתפים
+                showListOfParticipants()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -236,11 +255,7 @@ class MainActivity : AppCompatActivity() {
         option4 = findViewById(R.id.option4)
         btnAction = findViewById(R.id.btnAction)
 
-//        //Parash= tvParasha.text.toString()
-//        btnStartQuiz.setOnClickListener {
-//            //Parash= tvParasha.text.toString().substring("פרשת ".length,tvParasha.text.toString().lastIndex+1)
-//           renderQuestion()
-//        }
+
 
         btnAction.setOnClickListener {
 
@@ -248,24 +263,6 @@ class MainActivity : AppCompatActivity() {
             val isFirstRun = prefs.getBoolean("is_first_run", true)
 
             if (isFirstRun) {
-
-//                Toast.makeText(this, "בבקשה בחר את התשובה", Toast.LENGTH_SHORT).show()
-//                return@setOnClickListener
-
-               val db = FirebaseFirestore.getInstance()
-//
-//                val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
-//                val updateData = mapOf("parasha" to tvParasha)
-//
-//                db.collection("users")
-//                    .document(userId)
-//                    .update(updateData)
-//                    .addOnSuccessListener {
-//                        Log.d("Firestore", "tvParasha updated successfully")
-//                    }
-//                    .addOnFailureListener { e ->
-//                        Log.e("Firestore", "Error updating tvParasha", e)
-//                    }
 
 
                 // ✅ Run your one-time setup code here
@@ -305,69 +302,31 @@ class MainActivity : AppCompatActivity() {
     private fun saveQuizResult() {
 
         val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        val user = auth.currentUser
+        if (user != null) {
+            Log.d("Auth", "Signed in anonymously as: ${user.uid}")
+            val db = FirebaseFirestore.getInstance()
+            val newScore = score // Replace with actual score from quiz logic
+            val updateData = mapOf(
+                "parasha" to Parash.toString(),
+                "correctAnswers" to newScore,
+                "totalQuestions" to lastIndex+1,
+                "score" to (newScore.toDouble() / (lastIndex + 1)) * 100)
 
-        auth.signInAnonymously()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    if (user != null) {
-                        Log.d("Auth", "Signed in anonymously as: ${user.uid}")
-                        val db = FirebaseFirestore.getInstance()
-                        val newScore = score // Replace with actual score from quiz logic
-                        val updateData = mapOf(
-                            "parasha" to findViewById<TextView>(R.id.Parash),
-                            "score" to newScore)
-
-                        db.collection("users")
-                            .document(user.uid)
-                            .update(updateData)
-                            .addOnSuccessListener {
-                                Log.d("Firestore", "Score updated successfully")
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e("Firestore", "Error updating score", e)
-                            }
-                    }
-                } else {
-                    Log.e("Auth", "Anonymous sign-in failed: ${task.exception?.message}")
+            db.collection("users")
+                .document(user.uid)
+                .update(updateData)
+                .addOnSuccessListener {
+                    Log.d("Firestore", "Score updated successfully")
                 }
-            }
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Error updating score", e)
+                }
 
 
-//        FirebaseAuth.getInstance().addAuthStateListener { auth ->
-//            val user = auth.currentUser
-//            if (user != null) {
-//                val uid = user.uid
-//                // Now you can safely update Firestore
-//                val db = FirebaseFirestore.getInstance()
-//                val newScore = score // Replace with actual score from quiz logic
-//                val updateData = mapOf(
-//                    "parasha" to findViewById<TextView>(R.id.Parash),
-//                    "score" to newScore)
-//
-//                db.collection("users")
-//                    .document(uid)
-//                    .update(updateData)
-//                    .addOnSuccessListener {
-//                        Log.d("Firestore", "Score updated successfully")
-//                    }
-//                    .addOnFailureListener { e ->
-//                        Log.e("Firestore", "Error updating score", e)
-//                    }
-//            } else {
-//                Log.d("UserProfileActivity", "No user is signed in.!!!!!!!!!!")
-//            }
-//        }
-
-
-        //val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-
+        }
     }
-//    fun recordResponse(userId: String, userName: String, answers: List<String>) {
-//        val response = QuizResult(userId, userName, answers)
-//        quizResponses.add(response)
-//    }
 
     fun fetchParasha(callback: (String, Any?) -> Unit) {
         val client = OkHttpClient()
@@ -398,7 +357,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun getTodayQuestions(context: Context): List<Question> {
+    fun   getTodayQuestions(context: Context): List<Question> {
         val jsonString = loadQuizFromAssets(context)
         val root = JSONObject(jsonString)
         val parashot = root.getJSONArray("parashot")
@@ -498,20 +457,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showResultDialog() {
-        //val jsonString = loadQuizFromAssets(applicationContext)
-        //val quiz = Gson().fromJson(jsonString, Quiz::class.java)
-        val message = "הציון שלך $score מתוך ${lastIndex+1}"
+        var message = "הציון שלך $score מתוך ${lastIndex+1}"
+
+
+
         AlertDialog.Builder(this)
             .setTitle("החידון הסתיים")
             .setMessage(message)
-            .setPositiveButton("מהתחלה") { _, _ -> restartQuiz() }
-            .setNegativeButton("סגור") { _, _ -> finish() }
+            .setPositiveButton("תודה") { _, _ -> showListOfParticipants() }
+            //.setNegativeButton("סגור") { _, _ -> finish() }
             .setCancelable(false)
             .show()
-
-
     }
+    private fun showListOfParticipants() {
+        val db = FirebaseFirestore.getInstance()
+        // 1. מיון התוצאות לפי שדה 'score' בסדר יורד והגבלה ל-10 התוצאות הראשונות
+        val usersRef = db.collection("users")
+            .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING) // מיון לפי ציון, מהגבוה לנמוך
+            .limit(10) // הגבלה ל-10 התוצאות המובילות
 
+        usersRef.get()
+            .addOnSuccessListener { result ->
+                if (result.isEmpty) {
+                    Toast.makeText(this, "לא נמצאו משתתפים", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                Log.d("Firestore", "Query succeeded with ${result.size()} documents")
+                val userList = mutableListOf<String>()
+
+                // 2. יצירת הרשימה הממוספרת
+                for ((index, document) in result.withIndex()) {
+                    val name = document.getString("name") ?: "אלמוני"
+                    var scoreValue = 0.0
+                    val scoreData = document.get("score")
+
+                    if (scoreData is Number) {
+                        scoreValue = scoreData.toDouble()
+                    }
+
+                    val formattedScore = String.format("%.2f", scoreValue)
+                    // הוספת מספור לכל שורה
+                    userList.add("${index + 1}. $name - ציון: $formattedScore")
+                }
+
+                val message = userList.joinToString("\n")
+
+                // 3. הצגת התוצאות ב-AlertDialog במקום Toast
+                AlertDialog.Builder(this)
+                    .setTitle("10 התוצאות הגבוהות ביותר")
+                    .setMessage(message)
+                    .setPositiveButton("סגור", null) // כפתור לסגירת הדיאלוג
+                    .show()
+            }
+            .addOnFailureListener { exception ->
+                Log.w("Firestore", "Error getting users: ", exception)
+                Toast.makeText(this, "שגיאה בקבלת התוצאות", Toast.LENGTH_SHORT).show()
+            }
+
+        // אין צורך להתחיל מחדש את החידון כאן, לכן הקריאה ל-restartQuiz() נשארת בהערה
+        // restartQuiz()
+    }
     private fun restartQuiz() {
         currentIndex = 0
         score = 0

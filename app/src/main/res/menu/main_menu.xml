@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
     <item
         android:id="@+id/action_user"
         android:title="הכנס משתמש"
-        android:icon="@drawable/ic_user"
-        app:showAsAction="always"
+        android:icon="@drawable/ic_user_profile"
+        app:actionLayout="@layout/user_title_layout"
+        app:showAsAction="never"
         android:textAppearance="@style/MenuItemBoldText"/>
+    <!-- ===== הוספת הכפתור החדש להצגת תוצאות ===== -->
+    <item
+        android:id="@+id/action_show_results"
+        android:title="הצג תוצאות"
+        android:icon="@android:drawable/ic_menu_agenda"
+        app:showAsAction="ifRoom" />
 </menu>

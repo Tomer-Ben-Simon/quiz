@@ -1,0 +1,21 @@
+<!-- res/layout/user_title_layout.xml -->
+<!-- Use a FrameLayout or similar as the root -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="?attr/actionBarSize"
+    android:minWidth="?attr/actionBarSize"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+
+    <!-- Your existing content, for example, a TextView -->
+<TextView
+android:id="@+id/user_name_toolbar"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="אורח"
+android:textColor="@color/white"
+android:textSize="16sp"
+android:gravity="center"
+android:layout_gravity="center" />
+
+    </FrameLayout>
