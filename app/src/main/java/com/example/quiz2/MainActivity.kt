@@ -14,6 +14,7 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.room.Dao
 import androidx.room.Database
+import com.google.firebase.firestore.SetOptions
 import org.json.JSONObject
 import java.io.IOException
 import okhttp3.OkHttpClient
@@ -34,6 +35,8 @@ import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
+import java.time.LocalDate
+import java.util.Random
 
 
 class MainActivity : AppCompatActivity() {
@@ -199,6 +202,7 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         //FirebaseApp.initializeApp(this) // ← This is the magic line
         super.onCreate(savedInstanceState)
@@ -207,11 +211,21 @@ class MainActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
+        tvQuestion = findViewById(R.id.tvQuestion)
+        tvProgress = findViewById(R.id.tvProgress)
+        tvFeedback = findViewById(R.id.tvFeedback)
+        radioGroup = findViewById(R.id.radioGroup)
+        option1 = findViewById(R.id.option1)
+        option2 = findViewById(R.id.option2)
+        option3 = findViewById(R.id.option3)
+        option4 = findViewById(R.id.option4)
+        btnAction = findViewById(R.id.btnAction)
+
         val tvParasha = findViewById<TextView>(R.id.Parash)
         fetchParasha { hebrewParasha, englishParash ->
             //lifecycleScope.launch(Dispatchers.Main) {
-                tvParasha.text = hebrewParasha
-                Parash= englishParash.toString()
+            tvParasha.text = hebrewParasha
+            Parash= englishParash.toString()
             //}
         }
         val Week_day = findViewById<TextView>(R.id.Week_day)
@@ -239,58 +253,69 @@ class MainActivity : AppCompatActivity() {
                     else -> "לא ידוע"
 
                 }
-
+                resetQuizForDay(DayName)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        tvQuestion = findViewById(R.id.tvQuestion)
-        tvProgress = findViewById(R.id.tvProgress)
-        tvFeedback = findViewById(R.id.tvFeedback)
-        radioGroup = findViewById(R.id.radioGroup)
-        option1 = findViewById(R.id.option1)
-        option2 = findViewById(R.id.option2)
-        option3 = findViewById(R.id.option3)
-        option4 = findViewById(R.id.option4)
-        btnAction = findViewById(R.id.btnAction)
-
-
-
         btnAction.setOnClickListener {
-
-            val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-            val isFirstRun = prefs.getBoolean("is_first_run", true)
-
-            if (isFirstRun) {
-
-
-                // ✅ Run your one-time setup code here
+            if (btnAction.text == "התחל") {
+                tvQuestion.visibility = View.VISIBLE
+                radioGroup.visibility = View.VISIBLE
                 renderQuestion()
-
-                prefs.edit().putBoolean("is_first_run", false).apply()
-            }
-
-            if (!answered) {
-
-                val selectedId = radioGroup.checkedRadioButtonId
-                if (selectedId == -1) {
-                    Toast.makeText(this, "בבקשה בחר את התשובה", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                val selectedIndex = when (selectedId) {
-                    R.id.option1 -> 0
-                    R.id.option2 -> 1
-                    R.id.option3 -> 2
-                    R.id.option4 -> 3
-                    else -> -1
-                }
-                checkAnswer(selectedIndex)
             } else {
-                nextQuestion()
+                if (!answered) {
+                    val selectedId = radioGroup.checkedRadioButtonId
+                    if (selectedId == -1) {
+                        Toast.makeText(this, "בבקשה בחר את התשובה", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    val selectedIndex = when (selectedId) {
+                        R.id.option1 -> 0
+                        R.id.option2 -> 1
+                        R.id.option3 -> 2
+                        R.id.option4 -> 3
+                        else -> -1
+                    }
+                    checkAnswer(selectedIndex)
+                } else {
+                    nextQuestion()
+                }
             }
-            //saveQuizResult()
         }
+        resetQuizForDay(DayName) // Initial check
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun resetQuizForDay(dayName: String) {
+        currentIndex = 0
+        score = 0
+        answered = false
+        btnAction.text = "התחל"
+        tvQuestion.visibility = View.GONE
+        radioGroup.visibility = View.GONE
+
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val lastPlayedDate = prefs.getString("last_played_$dayName", null)
+        val currentDate = LocalDate.now().toString()
+
+        if (lastPlayedDate == currentDate) {
+            btnAction.isEnabled = false
+            tvFeedback.text = "כבר השלמת את החידון להיום"
+        } else {
+            btnAction.isEnabled = true
+            tvFeedback.text = ""
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun saveLastPlayedDate(dayName: String) {
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        val currentDate = LocalDate.now().toString()
+        editor.putString("last_played_$dayName", currentDate)
+        editor.apply()
     }
 
     private fun isMainProcess(context: Context): Boolean {
@@ -316,7 +341,7 @@ class MainActivity : AppCompatActivity() {
 
             db.collection("users")
                 .document(user.uid)
-                .update(updateData)
+                .set(updateData, SetOptions.merge())
                 .addOnSuccessListener {
                     Log.d("Firestore", "Score updated successfully")
                 }
@@ -357,19 +382,32 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun   getTodayQuestions(context: Context): List<Question> {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun   getTodayQuestions(context: Context, userId: String): List<Question> {
         val jsonString = loadQuizFromAssets(context)
         val root = JSONObject(jsonString)
         val parashot = root.getJSONArray("parashot")
 
         val questionsToday = mutableListOf<Question>()
 
+        val dayNameToKeys = mapOf(
+            "rishon" to listOf("rishon", "ראשון"),
+            "sheni" to listOf("sheni", "שני"),
+            "shlishi" to listOf("shlishi", "שלישי"),
+            "reviee" to listOf("reviee", "רביעי"),
+            "hamishi" to listOf("hamishi", "חמישי"),
+            "shishi" to listOf("shishi", "שישי"),
+            "shabat" to listOf("shabat", "שבת")
+        )
+        val possibleKeysForDay = dayNameToKeys[DayName] ?: listOf(DayName)
+
+
         for (i in 0 until parashot.length())
         {
             val parasha = parashot.getJSONObject(i)
             val parashKeys = parasha.keys()
             val firstKey = parashKeys.next()
-            if (Parash.toString().contains(firstKey.toString(),false))
+            if (Parash.toString().contains(firstKey.toString(),ignoreCase = true))
             {
                 val parasha_days = parasha.getJSONArray(firstKey.toString())
                 for (j in 0 until parasha_days.length())
@@ -377,9 +415,9 @@ class MainActivity : AppCompatActivity() {
                     val days = parasha_days.getJSONObject(j)
                     val daysKeys = days.keys()
                     val daysKeysFirstKey = daysKeys.next()
-                    if (daysKeysFirstKey.toString() == DayName.toString())
+                    if (possibleKeysForDay.contains(daysKeysFirstKey))
                     {
-                        val questions = days.getJSONArray(DayName.toString())
+                        val questions = days.getJSONArray(daysKeysFirstKey)
                         for (k in 0 until questions.length())
                         {
                             val q = questions.getJSONObject(k)
@@ -400,24 +438,44 @@ class MainActivity : AppCompatActivity() {
                 break
             }
         }
-        return questionsToday
+        val seed = (userId + LocalDate.now().toString()).hashCode().toLong()
+        questionsToday.shuffle(Random(seed))
+
+        return if (questionsToday.size > 10) {
+            questionsToday.take(10)
+        } else {
+            questionsToday
+        }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun renderQuestion() {
-        val questions = getTodayQuestions(applicationContext)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId == null) {
+            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val questions = getTodayQuestions(applicationContext, userId)
+        if (questions.isEmpty()) {
+            Toast.makeText(this, "No questions available for today.", Toast.LENGTH_SHORT).show()
+            btnAction.text = "התחל"
+            tvQuestion.visibility = View.GONE
+            radioGroup.visibility = View.GONE
+            return
+        }
         currentQ=questions[currentIndex]
         lastIndex=questions.size-1
         val q = questions[currentIndex]
-            tvQuestion.text = questions[currentIndex].question
-            tvProgress.text = " שאלה ${currentIndex + 1} מתוך ${questions.size}"
-            tvFeedback.text = ""
-            radioGroup.clearCheck()
-            option1.text = q.options[0]
-            option2.text = q.options[1]
-            option3.text = q.options[2]
-            option4.text = q.options[3]
-            enableOptions(true)
-            btnAction.text = "שלח"
-            answered = false
+        tvQuestion.text = questions[currentIndex].question
+        tvProgress.text = " שאלה ${currentIndex + 1} מתוך ${questions.size}"
+        tvFeedback.text = ""
+        radioGroup.clearCheck()
+        option1.text = q.options[0]
+        option2.text = q.options[1]
+        option3.text = q.options[2]
+        option4.text = q.options[3]
+        enableOptions(true)
+        btnAction.text = "שלח"
+        answered = false
     }
     private fun enableOptions(enable: Boolean) {
         option1.isEnabled = enable
@@ -443,6 +501,7 @@ class MainActivity : AppCompatActivity() {
         else "הבא"
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun nextQuestion() {
         //val jsonString = loadQuizFromAssets(applicationContext)
         //val quiz = Gson().fromJson(jsonString, Quiz::class.java)
@@ -451,6 +510,7 @@ class MainActivity : AppCompatActivity() {
             renderQuestion()
         } else {
             saveQuizResult()
+            saveLastPlayedDate(DayName)
             showResultDialog()
 
         }
@@ -518,6 +578,7 @@ class MainActivity : AppCompatActivity() {
         // אין צורך להתחיל מחדש את החידון כאן, לכן הקריאה ל-restartQuiz() נשארת בהערה
         // restartQuiz()
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun restartQuiz() {
         currentIndex = 0
         score = 0
