@@ -1,116 +1,60 @@
 package com.example.quiz2
-import android.app.ActivityManager
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.*
 import androidx.annotation.RequiresApi
-import androidx.room.Dao
-import androidx.room.Database
-import com.google.firebase.firestore.SetOptions
-import org.json.JSONObject
-import java.io.IOException
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query as FirestoreQuery
+import com.kosherjava.zmanim.hebrewcalendar.JewishDate
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.Call
-import okhttp3.Callback
-import com.kosherjava.zmanim.hebrewcalendar.JewishDate
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.PrimaryKey
-import androidx.room.Query
-import androidx.room.RoomDatabase
-import com.google.firebase.firestore.FirebaseFirestore
-import androidx.appcompat.widget.Toolbar
-import com.google.firebase.auth.FirebaseAuth
-import android.text.SpannableString
-import android.text.style.RelativeSizeSpan
+import org.json.JSONObject
+import java.io.IOException
 import java.time.LocalDate
 import java.util.Random
 
 
 class MainActivity : AppCompatActivity() {
 
-    @Entity(tableName = "users")
-    data class User(
-        @PrimaryKey val userId: String,
-        val name: String
-    )
 
-    @Entity(
-        tableName = "quiz_results",
-        foreignKeys = [ForeignKey(
-            entity = User::class,
-            parentColumns = ["userId"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        )]
-    )
-    data class QuizResult(
-        @PrimaryKey(autoGenerate = true) val id: Int = 0,
-        val userId: String,
-        val quizId: String,
-        val score: Int,
-        val timestamp: Long
-    )
 
-    data class Parashot(
-        val name: String,
-        val hebrew: String,
-        val days: List<Days>,
-        val week_day: String,
-    )
 
-    data class Days(
-        val dayName: String,
-        val questions: List<Question>
-    )
+
 
     data class Question(
         val id: Int,
-        val question_num_per_day: Int,
+        val questionNumPerDay: Int,
         val question: String,
         val options: List<String>,
-        val answer: Int
+        val answer: Int,
+        var userAnswer: Int = -1,
+        val day: String = ""
     )
 
-    @Dao
-    interface UserDao {
-        @Insert(onConflict = OnConflictStrategy.REPLACE)
-        suspend fun insertUser(user: User)
 
-        @Query("SELECT * FROM users")
-        suspend fun getAllUsers(): List<User>
-    }
 
-    @Dao
-    interface QuizResultDao {
-        @Insert
-        suspend fun insertResult(result: QuizResult)
+    data class ParashaQuiz(
+        val hebrewName: String = "",
+        val questions: List<Question> = emptyList()
+    )
 
-        @Query("SELECT * FROM quiz_results WHERE userId = :userId")
-        suspend fun getResultsForUser(userId: String): List<QuizResult>
 
-        @Query("SELECT * FROM quiz_results ORDER BY score DESC")
-        suspend fun getLeaderboard(): List<QuizResult>
-    }
-    @Database(entities = [User::class, QuizResult::class], version = 1)
-    abstract class AppDatabase : RoomDatabase() {
-        abstract fun userDao(): UserDao
-        abstract fun quizResultDao(): QuizResultDao
-    }
-
-    private lateinit var Week_day: TextView
+    private lateinit var tvParasha: TextView
+    private lateinit var weekDay: TextView
     private lateinit var tvQuestion: TextView
     private lateinit var tvProgress: TextView
     private lateinit var tvFeedback: TextView
@@ -121,12 +65,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var option4: RadioButton
     private lateinit var btnAction: Button
     private lateinit var currentQ: Question
+    private lateinit var spinnerParasha: Spinner
+    private lateinit var btnPrevious: Button
+    private lateinit var btnNext: Button
+    private lateinit var reviewNavigation: LinearLayout
     private var lastIndex = 0
     private var currentIndex = 0
     private var score = 0
     private var answered = false
-    var Parash=""
+    private var inReviewMode = false
 
+    var parash=""
+    private val questions = mutableListOf<Question>()
     val hebrewDate = JewishDate()
     val dayOfWeek = hebrewDate.dayOfWeek // returns 5 for Thursday
     val hebrewDayName = when (dayOfWeek) {
@@ -139,7 +89,7 @@ class MainActivity : AppCompatActivity() {
         7 -> "שבת"
         else -> "לא ידוע"
     }
-    var DayName = when (hebrewDayName) {
+    var dayName = when (hebrewDayName) {
         "ראשון" -> "rishon"
         "שני" -> "sheni"
         "שלישי" -> "shlishi"
@@ -149,62 +99,37 @@ class MainActivity : AppCompatActivity() {
         "שבת" -> "shabat"
         else -> "לא ידוע"
     }
-
-    val quizResponses = mutableListOf<QuizResult>()
+    val parashots =
+        listOf(
+            "בראשית","נח"  ,"לך לך"  ,"וירא" ,"חיי שרה","תולדות"  ,"ויצא"  ,"וישלח","וישב"  ,"מקץ"    ,"ויגש","ויחי",
+            "שמות"  ,"וארא","בא"     ,"בשלח" ,"יתרו"   ,"משפטים"  ,"תרומה" ,"תצוה" ,"כי תשא","ויקהל"  ,"ויקהל-פקודי","פקודי",
+            "ויקרא" ,"צו"  ,"שמיני"  ,"תזריע","תזריע-מצורע","מצורע"  ,"אחרי מות" ,"אחרי מות-קדושים","קדושים","אמור" ,"בהר"   ,"בהר-בחוקותי","בחוקותי",
+            "במדבר" ,"נשא" ,"בהעלותך","שלח"  ,"קרח"    ,"חקת"     ,"בלק"   ,"פנחס" ,"מטות"  ,"מטות-מסעי" ,"מסעי"   ,
+            "דברים" ,"ואתחנן" ,"עקב","ראה"  ,"שופטים"  ,"כי תצא"  ,"כי תבוא","נצבים" ,"נצבים-וילך","וילך","האזינו" ,"וזאת הברכה"
+        )
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
-
-
-        // Find the menu item safely
-        val resultsMenuItem = menu?.findItem(R.id.action_show_results)
-
-        // --- SAFE CODE BLOCK ---
-        // Only proceed if the menu item was actually found
-        if (resultsMenuItem != null) {
-            val title = resultsMenuItem.title
-
-            // Also check if the title itself is not null or empty
-            if (!title.isNullOrEmpty()) {
-                val spannableTitle = SpannableString(title)
-
-                // Apply the size span
-                // The previous fix (?: 0) is still important here
-                spannableTitle.setSpan(
-                    RelativeSizeSpan(1.2f),
-                    0,
-                    title.length, // No need for Elvis operator here because we already checked for null
-                    0
-                )
-
-                // Set the new styled title
-                resultsMenuItem.title = spannableTitle
-            }
-        }
-        // --- END OF SAFE CODE BLOCK ---
         return true
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_user -> {
-                // טיפול בלחיצה על כפתור פרופיל המשתמש
                 val intent = Intent(this, UserProfileActivity::class.java)
                 startActivity(intent)
                 true
             }
-            // ===== הוספת טיפול בלחיצה על הכפתור החדש =====
             R.id.action_show_results -> {
-                // קריאה לפונקציה שמציגה את רשימת המשתתפים
                 showListOfParticipants()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
-        //FirebaseApp.initializeApp(this) // ← This is the magic line
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -220,29 +145,48 @@ class MainActivity : AppCompatActivity() {
         option3 = findViewById(R.id.option3)
         option4 = findViewById(R.id.option4)
         btnAction = findViewById(R.id.btnAction)
+        spinnerParasha = findViewById(R.id.spinnerParasha)
+        weekDay = findViewById(R.id.weekDay)
+        weekDay.text=hebrewDayName
+        tvParasha = findViewById(R.id.Parash)
 
-        val tvParasha = findViewById<TextView>(R.id.Parash)
-        fetchParasha { hebrewParasha, englishParash ->
-            //lifecycleScope.launch(Dispatchers.Main) {
-            tvParasha.text = hebrewParasha
-            Parash= englishParash.toString()
-            //}
-        }
-        val Week_day = findViewById<TextView>(R.id.Week_day)
-        Week_day.text=hebrewDayName
-        //val weekdays = listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+        btnPrevious = findViewById(R.id.btnPrevious)
+        btnNext = findViewById(R.id.btnNext)
+        reviewNavigation = findViewById(R.id.reviewNavigation)
+
         val weekdays = listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, weekdays)
         val spinnerWeekdays = findViewById<Spinner>(R.id.spinnerWeekdays)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, weekdays)
         spinnerWeekdays.adapter = adapter
-        val todayName = weekdays[dayOfWeek - 1] // Calendar.SUNDAY = 1
+        val todayName = weekdays[dayOfWeek - 1]
         val todayIndex = weekdays.indexOf(todayName)
         spinnerWeekdays.setSelection(todayIndex)
+
+        fetchParasha { hebrewParasha, _ ->
+            val parashaIndex = findParashaIndex(hebrewParasha)
+            if(parashaIndex != -1) {
+                parash = parashots[parashaIndex]
+                setupParashotSpinner(parash)
+            }
+        }
+
+        spinnerParasha.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                parash = parent.getItemAtPosition(position).toString()
+                tvParasha.text = parash
+                resetQuizForDay(parash, dayName)
+                tvProgress.visibility=View.GONE
+                tvFeedback.visibility=View.GONE
+
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
         spinnerWeekdays.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 val selectedDay = weekdays[position]
-                Week_day.text=selectedDay
-                DayName = when (selectedDay) {
+                weekDay.text=selectedDay
+                dayName = when (selectedDay) {
                     "ראשון" -> "rishon"
                     "שני" -> "sheni"
                     "שלישי" -> "shlishi"
@@ -251,9 +195,11 @@ class MainActivity : AppCompatActivity() {
                     "שישי" -> "shishi"
                     "שבת" -> "shabat"
                     else -> "לא ידוע"
-
                 }
-                resetQuizForDay(DayName)
+                resetQuizForDay(parash, dayName)
+                tvProgress.visibility=View.GONE
+                tvFeedback.visibility=View.GONE
+
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -284,20 +230,72 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        resetQuizForDay(DayName) // Initial check
+        btnPrevious.setOnClickListener {
+            if (inReviewMode && currentIndex > 0) {
+                currentIndex--
+                renderQuestionForReview()
+            }
+        }
+
+        btnNext.setOnClickListener {
+            if (inReviewMode && currentIndex < lastIndex) {
+                currentIndex++
+                renderQuestionForReview()
+            }
+        }
+    }
+
+    private fun getParashotList(): List<String> {
+        val jsonString = loadQuizFromAssets(applicationContext)
+        val root = JSONObject(jsonString)
+        val parashotArray = root.getJSONArray("parashot")
+        val parashotList = mutableListOf<String>()
+        for (i in 0 until parashotArray.length()) {
+            val parashaObject = parashotArray.getJSONObject(i)
+            val parashaName = parashaObject.keys().next()
+            parashotList.add(parashaName)
+        }
+        return parashotList
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun resetQuizForDay(dayName: String) {
+    private fun setupParashotSpinner(currentParashaKey: String) {
+        val allParashotFromJSON = getParashotList()
+        val spinnerList = mutableListOf<String>()
+        val currentParashaIndex = allParashotFromJSON.indexOfFirst { it.equals(currentParashaKey, ignoreCase = true) }
+
+        if (currentParashaIndex != -1) {
+            spinnerList.add(allParashotFromJSON[currentParashaIndex])
+            for (i in (currentParashaIndex - 1) downTo 0) {
+                spinnerList.add(allParashotFromJSON[i])
+            }
+        } else {
+            spinnerList.addAll(allParashotFromJSON)
+        }
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, spinnerList)
+        spinnerParasha.adapter = adapter
+        spinnerParasha.setSelection(0)
+    }
+
+    fun findParashaIndex(name: String): Int {
+        return parashots.indexOfFirst { it.contains(name, ignoreCase = true) || name.contains(it, ignoreCase = true) }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun resetQuizForDay(parasha: String, day: String) {
         currentIndex = 0
         score = 0
         answered = false
+        inReviewMode = false
+        btnAction.visibility = View.VISIBLE
+        reviewNavigation.visibility = View.GONE
         btnAction.text = "התחל"
         tvQuestion.visibility = View.GONE
         radioGroup.visibility = View.GONE
 
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val lastPlayedDate = prefs.getString("last_played_$dayName", null)
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val lastPlayedDate = prefs.getString("last_played_${parasha}_$day", null)
         val currentDate = LocalDate.now().toString()
 
         if (lastPlayedDate == currentDate) {
@@ -306,50 +304,62 @@ class MainActivity : AppCompatActivity() {
         } else {
             btnAction.isEnabled = true
             tvFeedback.text = ""
+            questions.clear()
         }
     }
 
+    @SuppressLint("UseKtx")
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun saveLastPlayedDate(dayName: String) {
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    private fun saveLastPlayedDate(parasha: String, day: String) {
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val editor = prefs.edit()
         val currentDate = LocalDate.now().toString()
-        editor.putString("last_played_$dayName", currentDate)
+        editor.putString("last_played_${parasha}_$day", currentDate)
         editor.apply()
     }
-
-    private fun isMainProcess(context: Context): Boolean {
-        val pid = android.os.Process.myPid()
-        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val processName = manager.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName
-        return processName == context.packageName
-    }
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun saveQuizResult() {
-
         val auth = FirebaseAuth.getInstance()
-        val currentUser = auth.currentUser
         val user = auth.currentUser
         if (user != null) {
             Log.d("Auth", "Signed in anonymously as: ${user.uid}")
             val db = FirebaseFirestore.getInstance()
-            val newScore = score // Replace with actual score from quiz logic
-            val updateData = mapOf(
-                "parasha" to Parash.toString(),
-                "correctAnswers" to newScore,
-                "totalQuestions" to lastIndex+1,
-                "score" to (newScore.toDouble() / (lastIndex + 1)) * 100)
+//            val newScore = score
+//            val updateData = mapOf(
+//                "parasha" to parash,
+//                "correctAnswers" to newScore,
+//                "totalQuestions" to lastIndex+1,
+//                "score" to (newScore.toDouble() / (lastIndex + 1)) * 100)
+            val userRef = db.collection("users").document(user.uid)
+//            db.collection("users")
+//                .document(user.uid)
+//                .set(updateData, com.google.firebase.firestore.SetOptions.merge())
+//                .addOnSuccessListener {
+//                    Log.d("Firestore", "Score updated successfully")
+//                }
+//                .addOnFailureListener { e ->
+//                    Log.e("Firestore", "Error updating score", e)
+//                }
+            userRef.get().addOnSuccessListener { userDoc ->
+                val userName = userDoc.getString("name") ?: "אלמוני"
+                val resultData = hashMapOf(
+                    "userId" to user.uid,
+                    "name" to userName,
+                    "parasha" to parash,
+                    "day" to dayName,
+                    "score" to (score.toDouble() / questions.size) * 100,
+                    "correctAnswers" to score,
+                    "totalQuestions" to questions.size,
+                    "date" to LocalDate.now().toString()
+                )
 
-            db.collection("users")
-                .document(user.uid)
-                .set(updateData, SetOptions.merge())
-                .addOnSuccessListener {
-                    Log.d("Firestore", "Score updated successfully")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error updating score", e)
-                }
-
-
+                db.collection("quiz_results")
+                    .add(resultData)
+                    .addOnSuccessListener { Log.d("Firestore", "Quiz result saved successfully.") }
+                    .addOnFailureListener { e -> Log.e("Firestore", "Error saving quiz result.", e) }
+            }.addOnFailureListener { e ->
+                Log.e("Firestore", "Failed to get user name", e)
+            }
         }
     }
 
@@ -381,9 +391,25 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-
+    private fun fetchQuestionsFromFirestore(parasha: String, day: String, callback: (List<Question>) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("parashot_quizzes").document(parasha)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null) {
+                    val allQuestions = document.toObject(ParashaQuiz::class.java)?.questions
+                    val questionsForDay = allQuestions?.filter { it.day == day }
+                    callback(questionsForDay ?: emptyList())
+                } else {
+                    callback(emptyList())
+                }
+            }
+            .addOnFailureListener {
+                callback(emptyList())
+            }
+    }
     @RequiresApi(Build.VERSION_CODES.O)
-    fun   getTodayQuestions(context: Context, userId: String): List<Question> {
+    fun   getTodayQuestions(context: Context, userId: String?): List<Question> {
         val jsonString = loadQuizFromAssets(context)
         val root = JSONObject(jsonString)
         val parashot = root.getJSONArray("parashot")
@@ -399,38 +425,40 @@ class MainActivity : AppCompatActivity() {
             "shishi" to listOf("shishi", "שישי"),
             "shabat" to listOf("shabat", "שבת")
         )
-        val possibleKeysForDay = dayNameToKeys[DayName] ?: listOf(DayName)
+        val possibleKeysForDay = dayNameToKeys[dayName] ?: listOf(dayName)
 
 
         for (i in 0 until parashot.length())
         {
-            val parasha = parashot.getJSONObject(i)
-            val parashKeys = parasha.keys()
-            val firstKey = parashKeys.next()
-            if (Parash.toString().contains(firstKey.toString(),ignoreCase = true))
+            val parashaObject = parashot.getJSONObject(i)
+            val parashaKeys = parashaObject.keys()
+            if (!parashaKeys.hasNext()) continue
+            val firstKey = parashaKeys.next()
+            if (parash.equals(firstKey,ignoreCase = true))
             {
-                val parasha_days = parasha.getJSONArray(firstKey.toString())
-                for (j in 0 until parasha_days.length())
+                val parashaDays = parashaObject.getJSONArray(firstKey)
+                for (j in 0 until parashaDays.length())
                 {
-                    val days = parasha_days.getJSONObject(j)
+                    val days = parashaDays.getJSONObject(j)
                     val daysKeys = days.keys()
+                    if (!daysKeys.hasNext()) continue
                     val daysKeysFirstKey = daysKeys.next()
                     if (possibleKeysForDay.contains(daysKeysFirstKey))
                     {
-                        val questions = days.getJSONArray(daysKeysFirstKey)
-                        for (k in 0 until questions.length())
+                        val questionsArray = days.getJSONArray(daysKeysFirstKey)
+                        for (k in 0 until questionsArray.length())
                         {
-                            val q = questions.getJSONObject(k)
+                            val q = questionsArray.getJSONObject(k)
                             val question = Question(
                                 id = q.getInt("id"),
-                                question_num_per_day = q.getInt("question_num_per_day"),
+                                questionNumPerDay = q.getInt("question_num_per_day"),
                                 question = q.getString("question"),
                                 options = q.getJSONArray("options").let { arr ->
                                     List(arr.length()) { arr.getString(it) }
                                 },
                                 answer = q.getInt("answer")
                             )
-                            questionsToday.add(question)
+                            questions.add(question)
                         }
                         break
                     }
@@ -438,13 +466,13 @@ class MainActivity : AppCompatActivity() {
                 break
             }
         }
-        val seed = (userId + LocalDate.now().toString()).hashCode().toLong()
-        questionsToday.shuffle(Random(seed))
+        val seed = (userId!! + LocalDate.now().toString()).hashCode().toLong()
+        questions.shuffle(Random(seed))
 
-        return if (questionsToday.size > 10) {
-            questionsToday.take(10)
+        return if (questions.size > 10) {
+            questions.take(10)
         } else {
-            questionsToday
+            questions
         }
     }
     @RequiresApi(Build.VERSION_CODES.O)
@@ -454,7 +482,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show()
             return
         }
-        val questions = getTodayQuestions(applicationContext, userId)
+        if (questions.isEmpty()) {
+            getTodayQuestions(applicationContext, userId)
+        }
         if (questions.isEmpty()) {
             Toast.makeText(this, "No questions available for today.", Toast.LENGTH_SHORT).show()
             btnAction.text = "התחל"
@@ -466,7 +496,9 @@ class MainActivity : AppCompatActivity() {
         lastIndex=questions.size-1
         val q = questions[currentIndex]
         tvQuestion.text = questions[currentIndex].question
-        tvProgress.text = " שאלה ${currentIndex + 1} מתוך ${questions.size}"
+        tvProgress.visibility=View.VISIBLE
+        tvFeedback.visibility=View.VISIBLE
+        tvProgress.text =  " שאלה ${currentIndex + 1} מתוך ${questions.size}"
         tvFeedback.text = ""
         radioGroup.clearCheck()
         option1.text = q.options[0]
@@ -477,18 +509,36 @@ class MainActivity : AppCompatActivity() {
         btnAction.text = "שלח"
         answered = false
     }
+
+    private fun renderQuestionForReview() {
+        currentQ = questions[currentIndex]
+        tvQuestion.text = currentQ.question
+        tvProgress.text = " שאלה ${currentIndex + 1} מתוך ${questions.size}"
+
+        // Disable radio buttons and set the user's answer
+        enableOptions(false)
+        val userAnswerIndex = currentQ.userAnswer
+        if (userAnswerIndex != -1) {
+            (radioGroup.getChildAt(userAnswerIndex) as RadioButton).isChecked = true
+        }
+
+        // Show feedback
+        val correctIndex = currentQ.answer
+        if (userAnswerIndex == correctIndex) {
+            tvFeedback.text = "נכון ✅"
+        } else {
+            tvFeedback.text = "טעות ❌ (התשובה: ${currentQ.options[correctIndex]})"
+        }
+    }
+
     private fun enableOptions(enable: Boolean) {
-        option1.isEnabled = enable
-        option2.isEnabled = enable
-        option3.isEnabled = enable
-        option4.isEnabled = enable
+        for (i in 0 until radioGroup.childCount) {
+            radioGroup.getChildAt(i).isEnabled = enable
+        }
     }
     private fun checkAnswer(selectedIndex: Int) {
-        //val jsonString = loadQuizFromAssets(applicationContext)
-        //val quiz = Gson().fromJson(jsonString, Quiz::class.java)
-        //val correctIndex = quiz.questions[currentIndex].answer.toInt()
-        val correctIndex =currentQ.answer.toInt()
-        //val correctIndex = questions[currentIndex].answerIndex
+        currentQ.userAnswer = selectedIndex // Save user's answer
+        val correctIndex =currentQ.answer
         answered = true
         enableOptions(false)
         if (selectedIndex == correctIndex) {
@@ -503,81 +553,95 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun nextQuestion() {
-        //val jsonString = loadQuizFromAssets(applicationContext)
-        //val quiz = Gson().fromJson(jsonString, Quiz::class.java)
         if (currentIndex < lastIndex) {
             currentIndex++
             renderQuestion()
         } else {
             saveQuizResult()
-            saveLastPlayedDate(DayName)
+            saveLastPlayedDate(parash, dayName)
             showResultDialog()
 
         }
     }
-
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun showResultDialog() {
-        var message = "הציון שלך $score מתוך ${lastIndex+1}"
-
-
+        val message = "הציון שלך $score מתוך ${lastIndex+1}"
 
         AlertDialog.Builder(this)
             .setTitle("החידון הסתיים")
             .setMessage(message)
             .setPositiveButton("תודה") { _, _ -> showListOfParticipants() }
-            //.setNegativeButton("סגור") { _, _ -> finish() }
+            .setNegativeButton("עבור על התשובות") { _, _ ->
+                inReviewMode = true
+                btnAction.visibility = View.GONE
+                reviewNavigation.visibility = View.VISIBLE
+                currentIndex = 0
+                renderQuestionForReview()
+            }
             .setCancelable(false)
             .show()
     }
+
     private fun showListOfParticipants() {
         val db = FirebaseFirestore.getInstance()
-        // 1. מיון התוצאות לפי שדה 'score' בסדר יורד והגבלה ל-10 התוצאות הראשונות
-        val usersRef = db.collection("users")
-            .orderBy("score", com.google.firebase.firestore.Query.Direction.DESCENDING) // מיון לפי ציון, מהגבוה לנמוך
-            .limit(10) // הגבלה ל-10 התוצאות המובילות
 
-        usersRef.get()
+        // 1. Get all results for the current Parasha
+        db.collection("quiz_results")
+            .whereEqualTo("parasha", parash)
+            .get()
             .addOnSuccessListener { result ->
                 if (result.isEmpty) {
-                    Toast.makeText(this, "לא נמצאו משתתפים", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "לא נמצאו תוצאות עבור פרשה זו", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 
-                Log.d("Firestore", "Query succeeded with ${result.size()} documents")
-                val userList = mutableListOf<String>()
+                // 2. Aggregate scores on the client
+                val userScores = mutableMapOf<String, MutableMap<String, Double>>()
+                val userNames = mutableMapOf<String, String>()
 
-                // 2. יצירת הרשימה הממוספרת
-                for ((index, document) in result.withIndex()) {
+                for (document in result.documents) {
+                    val userId = document.getString("userId") ?: continue
+                    val day = document.getString("day") ?: continue
+                    val score = document.getDouble("score") ?: 0.0
                     val name = document.getString("name") ?: "אלמוני"
-                    var scoreValue = 0.0
-                    val scoreData = document.get("score")
 
-                    if (scoreData is Number) {
-                        scoreValue = scoreData.toDouble()
-                    }
+                    userNames.getOrPut(userId) { name }
+                    val dayScores = userScores.getOrPut(userId) { mutableMapOf() }
+                    dayScores[day] = score
+                }
 
-                    val formattedScore = String.format("%.2f", scoreValue)
-                    // הוספת מספור לכל שורה
-                    userList.add("${index + 1}. $name - ציון: $formattedScore")
+                // 3. Create leaderboard entries with both total and current day scores
+                val leaderboardEntries = userScores.map { (userId, dayScores) ->
+                    val totalScore = dayScores.values.sum()
+                    val currentDayScore = dayScores[dayName] ?: 0.0
+                    val name = userNames[userId]!!
+                    Triple(name, currentDayScore, totalScore)
+                }
+
+                // 4. Sort by total score and take top 10
+                val sortedLeaderboard = leaderboardEntries.sortedByDescending { it.third }.take(10)
+
+                // 5. Format for display
+                val userList = sortedLeaderboard.mapIndexed { index, (name, currentDayScore, totalScore) ->
+                    val formattedCurrentDayScore = String.format("%.2f", currentDayScore)
+                    val formattedTotalScore = String.format("%.2f", totalScore)
+                    "${index + 1}. $name - ציון ליום ${weekDay.text}: $formattedCurrentDayScore, ציון כולל: $formattedTotalScore"
                 }
 
                 val message = userList.joinToString("\n")
 
-                // 3. הצגת התוצאות ב-AlertDialog במקום Toast
                 AlertDialog.Builder(this)
-                    .setTitle("10 התוצאות הגבוהות ביותר")
+                    .setTitle("10 התוצאות הגבוהות ביותר לפרשת $parash")
                     .setMessage(message)
-                    .setPositiveButton("סגור", null) // כפתור לסגירת הדיאלוג
+                    .setPositiveButton("סגור", null)
                     .show()
             }
             .addOnFailureListener { exception ->
-                Log.w("Firestore", "Error getting users: ", exception)
-                Toast.makeText(this, "שגיאה בקבלת התוצאות", Toast.LENGTH_SHORT).show()
+                Log.w("Firestore", "Error getting quiz results for leaderboard: ", exception)
+                Toast.makeText(this, "שגיאה בקבלת התוצאות.", Toast.LENGTH_LONG).show()
             }
-
-        // אין צורך להתחיל מחדש את החידון כאן, לכן הקריאה ל-restartQuiz() נשארת בהערה
-        // restartQuiz()
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     private fun restartQuiz() {
         currentIndex = 0
