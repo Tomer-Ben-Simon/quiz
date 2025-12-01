@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#5F03E0F4">
 
-
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -19,120 +19,169 @@
             app:title="חידון פרשת שבוע"
             app:titleTextColor="@android:color/black" />
 
-        <TextView
-            android:id="@+id/Parash"
-            android:layout_width="336dp"
-            android:layout_height="wrap_content"
-            android:text="פרשת השבוע"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textSize="34sp" />
-        <Spinner
-            android:id="@+id/spinnerWeekdays"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:padding="12dp"
-            android:layout_margin="18dp"
-            android:text="יום בשבוע"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textSize="34sp" />
-        <TextView
-            android:id="@+id/Week_day"
-            android:layout_width="336dp"
-            android:layout_height="wrap_content"
-            android:text="יום השבוע"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textSize="34sp" />
-        <TextView
-            android:id="@+id/tvProgress"
-            android:layout_width="336dp"
-            android:layout_height="wrap_content"
-            android:text="שאלות על הפרשה "
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textSize="34sp" />
-
-        <TextView
-            android:id="@+id/tvQuestion"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="השאלה"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textSize="34sp"
-            android:visibility="gone" />
+            android:orientation="horizontal"
+            android:background="?attr/colorPrimary"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-        <RadioGroup
-            android:id="@+id/radioGroup"
+            <Spinner
+                android:id="@+id/spinnerParasha"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <Spinner
+                android:id="@+id/spinnerWeekdays"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:supportsRtl="true"
-            android:visibility="gone">
+            android:orientation="vertical"
+            android:padding="24dp">
 
-            <RadioButton
-                android:id="@+id/option1"
+            <TextView
+                android:id="@+id/Parash"
+                android:layout_width="336dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center"
+                android:text="פרשת השבוע"
+                android:textAlignment="center"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textSize="34sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/weekDay"
+                android:layout_width="336dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center"
+                android:text="יום השבוע"
+                android:textAlignment="center"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textSize="40sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvProgress"
+                android:layout_width="336dp"
+                android:layout_height="wrap_content"
+                android:text="שאלות על הפרשה "
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/tvQuestion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layoutDirection="rtl"
-                android:text="אפשרות 1"
-                android:textSize="28sp" />
+                android:layout_marginTop="8dp"
+                android:text="השאלה"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textSize="34sp"
+                android:visibility="gone" />
 
-            <RadioButton
-                android:id="@+id/option2"
+            <RadioGroup
+                android:id="@+id/radioGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layoutDirection="rtl"
-                android:text=" 2"
-                android:textSize="28sp" />
+                android:layout_marginTop="16dp"
+                android:supportsRtl="true"
+                android:visibility="gone">
 
-            <RadioButton
-                android:id="@+id/option3"
+                <RadioButton
+                    android:id="@+id/option1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layoutDirection="rtl"
+                    android:text="אפשרות 1"
+                    android:textSize="28sp" />
+
+                <RadioButton
+                    android:id="@+id/option2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layoutDirection="rtl"
+                    android:text=" 2"
+                    android:textSize="28sp" />
+
+                <RadioButton
+                    android:id="@+id/option3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layoutDirection="rtl"
+                    android:text=""
+                    android:textSize="28sp" />
+
+                <RadioButton
+                    android:id="@+id/option4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layoutDirection="rtl"
+                    android:text=""
+                    android:textSize="28sp" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/tvFeedback"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:layoutDirection="rtl"
                 android:text=""
-                android:textSize="28sp" />
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textSize="24sp" />
 
-            <RadioButton
-                android:id="@+id/option4"
+            <Button
+                android:id="@+id/btnAction"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layoutDirection="rtl"
-                android:text=""
-                android:textSize="28sp" />
-        </RadioGroup>
+                android:layout_marginTop="16dp"
+                android:text="התחל"
+                android:textSize="34sp" />
 
-        <TextView
-            android:id="@+id/tvFeedback"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layoutDirection="rtl"
-            android:text=""
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textSize="24sp" />
+            <LinearLayout
+                android:id="@+id/reviewNavigation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
 
-        <Button
-            android:id="@+id/btnAction"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="התחל"
-            android:textSize="34sp" />
-    </LinearLayout>
-</ScrollView>
+                <Button
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="הקודם" />
+
+                <Button
+                    android:id="@+id/btnNext"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="הבא" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
