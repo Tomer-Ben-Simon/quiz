@@ -2,4 +2,51 @@
     <string name="app_name">Parashi-פרש"י</string>
     <string name="theCurrentParasha">הפרשה הנוכחית</string>
     <string name="progress_text">שאלות על הפרשה</string>
+
+    <!-- New strings for quiz progress -->
+    <string name="quiz_progress">שאלה %1$d מתוך %2$d</string>
+
+    <!-- New string for quiz feedback (in review mode) -->
+    <string name="quiz_feedback_correct">נכון ✅</string>
+    <string name="quiz_feedback_incorrect">טעות ❌ (התשובה: %1$s)</string>
+
+    <!-- New string for quiz results dialog -->
+    <string name="quiz_result_message">הציון שלך %1$d מתוך %2$d</string>
+
+    <!-- New string for leaderboard entry -->
+    <string name="leaderboard_entry">%1$d. %2$s - ציון ליום %3$s: %4$s, ציון כולל: %5$s</string>
+
+    <!-- Other strings used in dialogs or toasts (like "שם מלא", "מספר טלפון") -->
+    <string name="user_details_dialog_title">פרטי משתמש להגרלה</string>
+    <string name="user_details_dialog_message">אנא הזן את פרטיך לצורך השתתפות בהגרלה:</string>
+    <string name="user_details_hint_name">שם מלא</string>
+    <string name="user_details_hint_phone">מספר טלפון (לדוגמה: 05X-XXXXXXX)</string>
+    <string name="user_details_button_save">שמור והמשך</string>
+    <string name="user_details_button_cancel">ביטול</string>
+    <string name="user_details_missing_fields_toast">שם מלא ומספר טלפון נדרשים!</string>
+    <string name="user_details_not_saved_toast">פרטיך לא נשמרו. לא ניתן לשמור את תוצאת החידון להגרלה.</string>
+    <string name="user_details_saved_success_toast">פרטיך נשמרו בהצלחה!</string>
+    <string name="quiz_ended_title">החידון הסתיים</string>
+    <string name="quiz_ended_review_button">עבור על התשובות</string>
+    <string name="quiz_ended_thanks_button">תודה</string>
+    <string name="quiz_ended_save_prompt_message">החידון הסתיים! ציון: %1$d/%2$d (%3$d%%).\nהאם תרצה לשמור את תוצאתך לרשימת המצטיינים ולהגרלה השבועית?</string>
+    <string name="quiz_ended_save_prompt_yes">כן, שמור תוצאה</string>
+    <string name="quiz_ended_save_prompt_no">לא, תודה</string>
+    <string name="quiz_results_saved_long_toast">תוצאת החידון נשמרה להגרלה ולרשימת הטובים!</string>
+    <string name="quiz_results_not_saved_toast">תוצאתך לא נשמרה לרשימת המצטיינים.</string>
+    <string name="no_quiz_results_found">לא נמצאו תוצאות עבור פרשה זו</string>
+    <string name="leaderboard_title_parasha">10 התוצאות הגבוהות ביותר לפרשת %1$s</string>
+    <string name="dialog_close_button">סגור</string>
+    <string name="error_user_not_logged_in">שגיאה: משתמש לא מחובר.</string>
+    <string name="error_checking_user_data">שגיאה בבדיקת פרטי משתמש. נסה שוב.</string>
+    <string name="error_saving_user_data">שגיאה בשמירת פרטי משתמש. נסה שוב.</string>
+    <string name="error_saving_quiz_result">שגיאה בשמירת תוצאת החידון.</string>
+    <string name="quiz_already_completed">כבר השלמת את החידון להיום</string>
+    <string name="select_answer_toast">בבקשה בחר את התשובה</string>
+    <string name="no_questions_available">אין שאלות זמינות ליום זה.</string>
+    <string name="no_questions_for_parasha_day">אין שאלות זמינות לפרשה וליום זה.</string>
+    <string name="parasha_name_format">פרשת השבוע: %1$s</string>
+    <string name="day_name_format">היום: %1$s</string>
+    <string name="hanukkah_ner_prefix">נר %1$s</string>
+    <string name="parasha_not_found">פרשה לא נמצאה</string>
 </resources>

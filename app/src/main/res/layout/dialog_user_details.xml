@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layoutDirection="rtl">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="אנא הזן את פרטיך לצורך השתתפות בהגרלה:"
+        android:layout_marginBottom="15dp"
+        android:textSize="16sp"
+        android:textDirection="rtl"/>
+
+    <EditText
+        android:id="@+id/etUserName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:hint="שם מלא"
+        android:inputType="textPersonName"
+        android:layout_marginBottom="10dp"
+        android:singleLine="true"
+        android:textDirection="rtl"/>
+
+    <EditText
+        android:id="@+id/etUserPhone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layoutDirection="rtl"
+        android:hint="(05X-XXXXXXX) מספר טלפון "
+        android:inputType="phone"
+        android:singleLine="true"
+        android:textDirection="rtl"/>
+
+</LinearLayout>

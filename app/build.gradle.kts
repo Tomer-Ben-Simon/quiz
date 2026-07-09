@@ -1,3 +1,5 @@
+
+
 buildscript {
     repositories {
         google()
@@ -5,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath("com.google.gms:google-services:4.4.1") // ✅ Required for the plugin
-        classpath("com.android.tools.build:gradle:8.13.1")
+        classpath("com.android.tools.build:gradle:8.13.2")
         classpath(libs.google.services) // or latest version
     }
 }
@@ -13,7 +15,7 @@ buildscript {
 
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services") version "4.4.3" apply false
+    id("com.google.gms.google-services") version "4.4.4" apply false
     //id("com.google.gms.google-services")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt") // ← this is the missing piece
@@ -27,7 +29,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.quiz2"
-        minSdk = 24
+        minSdk = 26 // Changed from 24 to 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -56,10 +58,12 @@ android {
 dependencies {
     //implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx") // ← includes FirebaseApp
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation ("com.google.firebase:firebase-auth-ktx:22.3.0")
+    implementation ("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
+    //implementation(libs.firebase.functions)
     //implementation(libs.firebase.auth.ktx) // ← This is the ke
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-runtime:2.6.1")

@@ -9,12 +9,19 @@
         android:layout_height="match_parent"
         android:background="@color/white">
 
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:contentDescription="@string/app_name"
+            android:src="@mipmap/ic_launcher" />
+
         <TextView
             android:layout_width="140pt"
             android:layout_height="201dp"
             android:layout_marginTop="16dp"
-            android:text="ברוכים הבאים לישום היהדותי"
+            android:gravity="center_horizontal"
+            android:text=" ברוכים הבאים לפרש''י הישומון שמעשיר את הידע בפרשת השבוע בפשט ובפירוש רש''י"
             android:textColor="@color/black"
-            android:textSize="19pt" />
+            android:textSize="13pt" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

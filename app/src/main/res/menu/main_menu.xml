@@ -10,6 +10,13 @@
         app:actionLayout="@layout/user_title_layout"
         app:showAsAction="never"
         android:textAppearance="@style/MenuItemBoldText"/>
+    <item
+        android:id="@+id/admin"
+        android:title="administrator"
+        android:icon="@drawable/ic_user_profile"
+        app:actionLayout="@layout/user_title_layout"
+        app:showAsAction="never"
+        android:textAppearance="@style/MenuItemBoldText"/>
     <!-- ===== הוספת הכפתור החדש להצגת תוצאות ===== -->
     <item
         android:id="@+id/action_show_results"

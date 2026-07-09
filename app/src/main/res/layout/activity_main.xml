@@ -63,8 +63,12 @@
                 android:text="פרשת השבוע"
                 android:textAlignment="center"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textSize="34sp"
-                android:textStyle="bold" />
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:fontStyle="normal"
+                android:fontWeight="400"
+                />
 
             <TextView
                 android:id="@+id/weekDay"
@@ -75,7 +79,7 @@
                 android:text="יום השבוע"
                 android:textAlignment="center"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textSize="40sp"
+                android:textSize="34sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -95,7 +99,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="השאלה"
+                android:text=""
                 android:textAppearance="?attr/textAppearanceHeadlineSmall"
                 android:textSize="34sp"
                 android:visibility="gone" />
@@ -113,16 +117,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layoutDirection="rtl"
-                    android:text="אפשרות 1"
-                    android:textSize="28sp" />
+                    android:text=""
+                    android:textSize="28sp"
+                    android:visibility="gone"/>
 
                 <RadioButton
                     android:id="@+id/option2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layoutDirection="rtl"
-                    android:text=" 2"
-                    android:textSize="28sp" />
+                    android:text=""
+                    android:textSize="28sp"
+                    android:visibility="gone"/>
 
                 <RadioButton
                     android:id="@+id/option3"
@@ -130,7 +136,8 @@
                     android:layout_height="wrap_content"
                     android:layoutDirection="rtl"
                     android:text=""
-                    android:textSize="28sp" />
+                    android:textSize="28sp"
+                    android:visibility="gone"/>
 
                 <RadioButton
                     android:id="@+id/option4"
@@ -138,7 +145,8 @@
                     android:layout_height="wrap_content"
                     android:layoutDirection="rtl"
                     android:text=""
-                    android:textSize="28sp" />
+                    android:textSize="28sp"
+                    android:visibility="gone"/>
             </RadioGroup>
 
             <TextView
