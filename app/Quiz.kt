@@ -1,5 +1,5 @@
 // File: Quiz.kt
-package com.example.quiz2 // ← match your app's package name
+package com.tomer.parashi
 
 import android.app.Application
 import com.google.firebase.FirebaseApp

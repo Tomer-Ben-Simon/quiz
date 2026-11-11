@@ -37,9 +37,27 @@ async function getCurrentParashaName(date) {
             // For now, let's assume your DB stores the Hebrew names as used in your app.
             return parashaNameHebrew;
 
-        } else {
+        } else
+        {
+            const holiday = data.events.find(event => event.category === "holiday");
+            if (holiday && holiday.hebrew)
+            {
+                // The API provides the Hebrew name with "פרשת " prefix.
+                // We need to extract just the parasha name.
+                // Example: "פרשת משפטים" -> "משפטים"
+                const holidayNameHebrew = holiday.hebrew;
+
+                //const [_, ...rest] = holidayNameHebrew.hebrew.split(" ");
+                //const holidayNameHebrew = rest.join(" ");
+
+                // You might also want the English name for consistency if your DB uses it
+                // For now, let's assume your DB stores the Hebrew names as used in your app.
+                return holidayNameHebrew;
+            }
+            else{
             console.log("No Parasha event found for today:", formattedDate);
             return null; // Or throw an error if a Parasha is expected every week
+            }
         }
     } catch (error) {
         console.error("Error fetching Parasha from Hebcal:", error);

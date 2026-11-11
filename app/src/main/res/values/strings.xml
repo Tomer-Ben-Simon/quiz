@@ -49,4 +49,13 @@
     <string name="day_name_format">היום: %1$s</string>
     <string name="hanukkah_ner_prefix">נר %1$s</string>
     <string name="parasha_not_found">פרשה לא נמצאה</string>
+
+    <!-- Admin Password strings -->
+    <string name="admin_password_title">אימות מנהל</string>
+    <string name="admin_password_prompt">הזן סיסמת מנהל כדי להמשיך:</string>
+    <string name="admin_password_hint">סיסמת מנהל</string>
+    <string name="admin_password_correct">אימות מנהל הצליח</string>
+    <string name="admin_password_incorrect">סיסמה שגויה. הגישה נדחתה.</string>
+    <string name="admin_password_empty">יש להזין סיסמה.</string>
+    <string name="admin_confirm_button">אישור</string>
 </resources>

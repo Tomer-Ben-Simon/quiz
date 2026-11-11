@@ -24,15 +24,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.quiz2"
-    compileSdk = 35
+    namespace = "com.tomer.parashi"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.quiz2"
+        applicationId = "com.tomer.parashi"
         minSdk = 26 // Changed from 24 to 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
