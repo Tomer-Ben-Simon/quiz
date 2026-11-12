@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath("com.google.gms:google-services:4.4.1") // ✅ Required for the plugin
-        classpath("com.android.tools.build:gradle:8.13.2")
+        classpath("com.android.tools.build:gradle:9.4.1")
         classpath(libs.google.services) // or latest version
     }
 }
